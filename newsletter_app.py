@@ -1,4 +1,6 @@
 import gradio as gr
+import html
+import re
 import requests
 import json
 
@@ -8,6 +10,10 @@ def chat_function(message, history):
     """
     Handle chat messages using llama-server
     """
+
+    # Add a "thinking" message while processing
+    yield history + [[message, "Thinking..."]]
+
     try:
         # Prepare the conversation history for the API
         messages = []
@@ -15,7 +21,7 @@ def chat_function(message, history):
         # Add system message for newsletter context
         messages.append({
             "role": "system",
-            "content": "You are a helpful assistant specialized in creating engaging company newsletters. Help users write newsletter content, generate ideas, create headlines, and provide formatting suggestions. Be creative, professional, and focus on making content that employees will actually want to read."
+            "content": "You are a helpful assistant specialized in creating engaging company newsletters. Help users write newsletter content, generate ideas, create headlines, and provide formatting suggestions. Be creative, professional, and focus on making content that employees will actually want to read. Respond directly without showing internal thoughts."
         })
         
         # Add conversation history
@@ -30,8 +36,8 @@ def chat_function(message, history):
         payload = {
             "model": "llama",  # This might need to match your model name
             "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 1000,
+            "temperature": 0.6,
+            "max_tokens": 1500,
             "stream": False
         }
         
@@ -40,7 +46,7 @@ def chat_function(message, history):
             LLAMA_SERVER_URL,
             headers={"Content-Type": "application/json"},
             json=payload,
-            timeout=30
+            timeout=600
         )
         
         if response.status_code == 200:
@@ -56,9 +62,10 @@ def chat_function(message, history):
     except Exception as e:
         bot_response = f"Error: {str(e)}"
     
-    # Add the new conversation to history
-    history.append((message, bot_response))
-    return history
+    cleaned_response = re.sub(r"<think>.*?</think>", "", bot_response, flags=re.DOTALL)
+    cleaned_response = html.unescape(cleaned_response)  # Decodes &quot;, &lt;, etc.
+
+    yield history + [[message, cleaned_response]]
 
 def create_newsletter_chat():
     """
@@ -122,10 +129,10 @@ def create_newsletter_chat():
     
     return demo
 
+demo = create_newsletter_chat()
+
 if __name__ == "__main__":
-    # Create and launch the app
-    app = create_newsletter_chat()
-    app.launch(
+    demo.launch(
         server_name="0.0.0.0",  # Allow external connections
         server_port=7860,       # Default Gradio port
         share=True,            # Set to True to create a public link
