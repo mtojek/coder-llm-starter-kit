@@ -89,9 +89,9 @@ def create_newsletter_chat():
             with gr.Column():
                 gr.Markdown("""
                 ### Example prompts:
-                - "Create a newsletter about our Q1 achievements"
-                - "Write a fun announcement about our new office dog"
-                - "Generate ideas for our monthly team spotlight section"
+                - Create a newsletter about our Q1 achievements
+                - Write a fun announcement about our new office dog
+                - Generate ideas for our monthly team spotlight section
                 """)
         
         # Chat interface
