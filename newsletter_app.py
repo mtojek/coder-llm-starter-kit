@@ -1,14 +1,63 @@
 import gradio as gr
+import requests
+import json
+
+LLAMA_SERVER_URL = "http://localhost:8080/v1/chat/completions"
 
 def chat_function(message, history):
     """
-    Handle chat messages - this is where newsletter generation logic will go
+    Handle chat messages using llama-server
     """
-    # For now, just echo back a placeholder response
-    response = f"Thanks for your message: '{message}'. Newsletter generation features coming soon!"
-
+    try:
+        # Prepare the conversation history for the API
+        messages = []
+        
+        # Add system message for newsletter context
+        messages.append({
+            "role": "system",
+            "content": "You are a helpful assistant specialized in creating engaging company newsletters. Help users write newsletter content, generate ideas, create headlines, and provide formatting suggestions. Be creative, professional, and focus on making content that employees will actually want to read."
+        })
+        
+        # Add conversation history
+        for user_msg, assistant_msg in history:
+            messages.append({"role": "user", "content": user_msg})
+            messages.append({"role": "assistant", "content": assistant_msg})
+        
+        # Add current message
+        messages.append({"role": "user", "content": message})
+        
+        # API request payload
+        payload = {
+            "model": "llama",  # This might need to match your model name
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": 1000,
+            "stream": False
+        }
+        
+        # Make request to llama-server
+        response = requests.post(
+            LLAMA_SERVER_URL,
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            bot_response = result["choices"][0]["message"]["content"]
+        else:
+            bot_response = f"Error: Server returned status {response.status_code}. Make sure llama-server is running on port 8080."
+            
+    except requests.exceptions.ConnectionError:
+        bot_response = "Error: Cannot connect to llama-server. Please make sure it's running on http://localhost:8080"
+    except requests.exceptions.Timeout:
+        bot_response = "Error: Request timed out. The model might be taking too long to respond."
+    except Exception as e:
+        bot_response = f"Error: {str(e)}"
+    
     # Add the new conversation to history
-    history.append((message, response))
+    history.append((message, bot_response))
     return history
 
 def create_newsletter_chat():
