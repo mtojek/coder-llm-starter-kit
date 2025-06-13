@@ -15,6 +15,12 @@ locals {
   username = data.coder_workspace_owner.me.name
 }
 
+variable "huggingface_token" {
+  type        = string
+  description = "HuggingFace token"
+  sensitive   = true
+}
+
 provider "docker" {
   host = "tcp://katerose-fsn-cdr-dev.tailscale.svc.cluster.local:2375"
 }
