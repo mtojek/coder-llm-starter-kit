@@ -42,15 +42,23 @@ resource "coder_agent" "main" {
     fi
 
     # Add any commands that should be executed at workspace startup (e.g install requirements, start a program, etc) here
+    
     # Download LLM model in the GGUF format
     pipx install huggingface_hub[cli]
-    rm -rf hf-models
     /home/coder/.local/bin/huggingface-cli download QuantFactory/Meta-Llama-3-8B-Instruct-GGUF --include Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --local-dir 'hf-models'
 
     # Install llama.cpp
-    wget https://github.com/ggml-org/llama.cpp/releases/download/b5634/llama-b5634-bin-ubuntu-x64.zip
-    unzip -x llama-b5634-bin-ubuntu-x64.zip && rm llama-b5634-bin-ubuntu-x64.zip
-    mv build/bin llama-cpp && rm -rf build
+    if [ ! -d llama-cpp ]; then
+      wget https://github.com/ggml-org/llama.cpp/releases/download/b5634/llama-b5634-bin-ubuntu-x64.zip
+      unzip -x llama-b5634-bin-ubuntu-x64.zip && rm llama-b5634-bin-ubuntu-x64.zip
+      mv build llama-cpp
+    fi
+  EOT
+
+  shutdown_script = <<-EOT
+    set -e
+
+    rm -rf hf-models
   EOT
 
   # These environment variables allow you to make Git commits right away after creating a
