@@ -15,12 +15,6 @@ locals {
   username = data.coder_workspace_owner.me.name
 }
 
-variable "huggingface_token" {
-  type        = string
-  description = "HuggingFace token"
-  sensitive   = true
-}
-
 provider "docker" {
   host = "tcp://katerose-fsn-cdr-dev.tailscale.svc.cluster.local:2375"
 }
@@ -48,11 +42,13 @@ resource "coder_agent" "main" {
     fi
 
     # Add any commands that should be executed at workspace startup (e.g install requirements, start a program, etc) here
+    pipx install huggingface_hub[cli]
+    huggingface-cli download QuantFactory/Meta-Llama-3-8B-Instruct-GGUF --include 'Meta-Llama-3-8B-Instruct.Q4_K_S.gguf'
   EOT
 
   # These environment variables allow you to make Git commits right away after creating a
   # workspace. Note that they take precedence over configuration defined in ~/.gitconfig!
-  # You can remove this block if you'd prefer to configure Git manually or using
+  # you can remove this block if you'd prefer to configure Git manually or using
   # dotfiles. (see docs/dotfiles.md)
   env = {
     GIT_AUTHOR_NAME     = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
