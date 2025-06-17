@@ -42,7 +42,29 @@ resource "coder_agent" "main" {
     fi
 
     # Add any commands that should be executed at workspace startup (e.g install requirements, start a program, etc) here
-    
+  EOT
+
+  # These environment variables allow you to make Git commits right away after creating a
+  # workspace. Note that they take precedence over configuration defined in ~/.gitconfig!
+  # you can remove this block if you'd prefer to configure Git manually or using
+  # dotfiles. (see docs/dotfiles.md)
+  env = {
+    GIT_AUTHOR_NAME     = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
+    GIT_AUTHOR_EMAIL    = "${data.coder_workspace_owner.me.email}"
+    GIT_COMMITTER_NAME  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
+    GIT_COMMITTER_EMAIL = "${data.coder_workspace_owner.me.email}"
+  }
+}
+
+resource "coder_script" "llama_server_startup" {
+  agent_id           = coder_agent.main.id
+  display_name       = "Start llama-server"
+  run_on_start       = true
+  start_blocks_login = true
+
+  script = <<-EOF
+    #!/bin/sh
+
     # Download LLM model in the GGUF format
     pipx install huggingface_hub[cli]
     /home/coder/.local/bin/huggingface-cli download QuantFactory/Meta-Llama-3-8B-Instruct-GGUF --include Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --local-dir 'hf-models'
@@ -56,26 +78,19 @@ resource "coder_agent" "main" {
 
     # Start llama-server
     cd llama-cpp/bin
-    ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080
-  EOT
+    ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1  &
+  EOF
+}
 
-  shutdown_script = <<-EOT
-    set -e
+resource "coder_script" "llama_server_shutdown" {
+  agent_id     = coder_agent.main.id
+  display_name = "Stop llama-server"
+  run_on_stop  = true
 
+  script       = <<-EOF
+    #!/bin/sh
     pkill llama-server
-    rm -rf hf-models
-  EOT
-
-  # These environment variables allow you to make Git commits right away after creating a
-  # workspace. Note that they take precedence over configuration defined in ~/.gitconfig!
-  # you can remove this block if you'd prefer to configure Git manually or using
-  # dotfiles. (see docs/dotfiles.md)
-  env = {
-    GIT_AUTHOR_NAME     = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-    GIT_AUTHOR_EMAIL    = "${data.coder_workspace_owner.me.email}"
-    GIT_COMMITTER_NAME  = coalesce(data.coder_workspace_owner.me.full_name, data.coder_workspace_owner.me.name)
-    GIT_COMMITTER_EMAIL = "${data.coder_workspace_owner.me.email}"
-  }
+  EOF
 }
 
 resource "docker_volume" "home_volume" {
