@@ -135,6 +135,6 @@ if __name__ == "__main__":
     demo.launch(
         server_name="0.0.0.0",  # Allow external connections
         server_port=7860,       # Default Gradio port
-        share=True,            # Set to True to create a public link
+        share=False,            # Set to True to create a public link
         debug=True              # Enable debug mode during development
     )
