@@ -65,6 +65,10 @@ resource "coder_script" "setup_dev_environment" {
   script = <<-EOF
     #!/bin/bash
 
+    # Install packages
+    sudo apt-get update
+    sudo apt-get install tmux -y
+
     # Download LLM model in the GGUF format
     pipx install huggingface_hub[cli]
     /home/coder/.local/bin/huggingface-cli download QuantFactory/Meta-Llama-3-8B-Instruct-GGUF --include Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --local-dir 'hf-models'
