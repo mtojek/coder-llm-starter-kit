@@ -56,14 +56,14 @@ resource "coder_agent" "main" {
   }
 }
 
-resource "coder_script" "llama_server_startup" {
+resource "coder_script" "setup_dev_environment" {
   agent_id           = coder_agent.main.id
-  display_name       = "Start llama-server"
+  display_name       = "Setup dev environment"
   run_on_start       = true
   start_blocks_login = true
-
+  
   script = <<-EOF
-    #!/bin/sh
+    #!/bin/bash
 
     # Download LLM model in the GGUF format
     pipx install huggingface_hub[cli]
@@ -77,14 +77,27 @@ resource "coder_script" "llama_server_startup" {
     fi
 
     # Start llama-server
-    cd llama-cpp/bin
-    ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1  &
+    (
+      cd llama-cpp/bin
+      ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1  &
+    )
+
+    # Prepare project
+    if [ ! -d coder-llm-starter-kit ]; then
+      git clone https://github.com/mtojek/coder-llm-starter-kit
+      (
+        cd coder-llm-starter-kit
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install -r requirements.txt
+      )
+    fi
   EOF
 }
 
-resource "coder_script" "llama_server_shutdown" {
+resource "coder_script" "tear_down_dev_environment" {
   agent_id     = coder_agent.main.id
-  display_name = "Stop llama-server"
+  display_name = "Tear down dev environment"
   run_on_stop  = true
 
   script       = <<-EOF
