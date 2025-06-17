@@ -53,11 +53,16 @@ resource "coder_agent" "main" {
       unzip -x llama-b5634-bin-ubuntu-x64.zip && rm llama-b5634-bin-ubuntu-x64.zip
       mv build llama-cpp
     fi
+
+    # Start llama-server
+    cd llama-cpp/bin
+    ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080
   EOT
 
   shutdown_script = <<-EOT
     set -e
 
+    pkill llama-server
     rm -rf hf-models
   EOT
 
