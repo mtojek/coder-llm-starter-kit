@@ -48,13 +48,8 @@ data "coder_parameter" "model_name" {
     name = "Meta Llama 3.2 1B"
     value = "Llama-3.2-1B"
   }
-}
-
-data "coder_parameter" "model_instruct" {
-  name          = "model_instruct"
-  display_name  = "Instructions tuning enabled?"
-  type          = "bool"
-  default       = true
+  
+  order = 1
 }
 
 data "coder_parameter" "model_quant" {
@@ -75,6 +70,17 @@ data "coder_parameter" "model_quant" {
     name = "8-bit"
     value = "Q8_0"
   }
+
+  order = 2
+}
+
+data "coder_parameter" "model_instruct" {
+  name          = "model_instruct"
+  display_name  = "Instructions tuning enabled?"
+  type          = "bool"
+  default       = true
+
+  order = 3
 }
 
 resource "coder_agent" "main" {
