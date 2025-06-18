@@ -118,6 +118,10 @@ resource "coder_script" "setup_dev_environment" {
 
   script = <<-EOF
     #!/bin/bash
+    set -e
+    
+    MODEL_REPO_NAME=${data.coder_parameter.model_name.value}${data.coder_parameter.model_instruct.value ? "-Instruct" : ""}-GGUF
+    MODEL_GGUF=${data.coder_parameter.model_name.value}${data.coder_parameter.model_instruct.value ? "-Instruct" : ""}.${data.coder_parameter.model_quant.value}.gguf
 
     # Install packages
     sudo apt-get update
@@ -125,7 +129,7 @@ resource "coder_script" "setup_dev_environment" {
 
     # Download LLM model in the GGUF format
     pipx install huggingface_hub[cli]
-    /home/coder/.local/bin/huggingface-cli download QuantFactory/Meta-Llama-3-8B-Instruct-GGUF --include Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --local-dir 'hf-models'
+    /home/coder/.local/bin/huggingface-cli download QuantFactory/$MODEL_REPO_NAME --include $MODEL_GGUF --local-dir 'hf-models'
 
     # Install llama.cpp
     if [ ! -d llama-cpp ]; then
@@ -137,7 +141,7 @@ resource "coder_script" "setup_dev_environment" {
     # Start llama-server
     (
       cd llama-cpp/bin
-      ./llama-server --model /home/coder/hf-models/Meta-Llama-3-8B-Instruct.Q4_K_S.gguf --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1  &
+      ./llama-server --model /home/coder/hf-models/$MODEL_GGUF --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1  &
     )
 
     # Prepare project
