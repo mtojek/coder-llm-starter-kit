@@ -29,6 +29,24 @@ data "coder_provisioner" "me" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+data "coder_workspace_preset" "model_speed" {
+  name        = "Best speed with instruction tunning"
+  parameters = {
+    "model_name"     = "Llama-3.2-1B"
+    "model_quant"    = "Q2_K"
+    "model_instruct" = "true"
+  }
+}
+
+data "coder_workspace_preset" "model_quality" {
+  name        = "Best quality with instruction tunning"
+  parameters = {
+    "model_name"     = "Meta-Llama-3.1-8B"
+    "model_quant"    = "Q8_0"
+    "model_instruct" = "true"
+  }
+}
+
 data "coder_parameter" "model_name" {
   name          = "model_name"
   display_name  = "Model name"
@@ -119,7 +137,7 @@ resource "coder_script" "setup_dev_environment" {
   script = <<-EOF
     #!/bin/bash
     set -e
-    
+
     MODEL_REPO_NAME=${data.coder_parameter.model_name.value}${data.coder_parameter.model_instruct.value ? "-Instruct" : ""}-GGUF
     MODEL_GGUF=${data.coder_parameter.model_name.value}${data.coder_parameter.model_instruct.value ? "-Instruct" : ""}.${data.coder_parameter.model_quant.value}.gguf
 
