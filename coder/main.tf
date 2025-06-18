@@ -29,6 +29,54 @@ data "coder_provisioner" "me" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+data "coder_parameter" "model_name" {
+  name          = "model_name"
+  display_name  = "Model name"
+  type          = "string"
+  default       = "Meta-Llama-3-8B"
+
+  # Models published on: https://huggingface.co/QuantFactory
+  option {
+    name = "Meta Llama 3 8B"
+    value = "Meta-Llama-3-8B"
+  }
+  option {
+    name = "Meta Llama 3.1 8B"
+    value = "Meta-Llama-3.1-8B"
+  }
+  option {
+    name = "Meta Llama 3.2 1B"
+    value = "Llama-3.2-1B"
+  }
+}
+
+data "coder_parameter" "model_instruct" {
+  name          = "model_instruct"
+  display_name  = "Instructions tuning enabled?"
+  type          = "bool"
+  default       = true
+}
+
+data "coder_parameter" "model_quant" {
+  name          = "model_quant"
+  display_name  = "Quantization"
+  type          = "string"
+  default       = "Q4_0"
+
+  option {
+    name = "2-bit"
+    value = "Q2_K"
+  }
+  option {
+    name = "4-bit"
+    value = "Q4_0"
+  }
+  option {
+    name = "8-bit"
+    value = "Q8_0"
+  }
+}
+
 resource "coder_agent" "main" {
   arch           = data.coder_provisioner.me.arch
   os             = "linux"
@@ -61,7 +109,7 @@ resource "coder_script" "setup_dev_environment" {
   display_name       = "Setup dev environment"
   run_on_start       = true
   start_blocks_login = true
-  
+
   script = <<-EOF
     #!/bin/bash
 
