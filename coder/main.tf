@@ -15,8 +15,14 @@ locals {
   username = data.coder_workspace_owner.me.name
 }
 
+variable "docker_host" {
+  type        = string
+  description = "Docker host"
+  default     = "tcp://katerose-fsn-cdr-dev.tailscale.svc.cluster.local:2375"
+}
+
 provider "docker" {
-  host = "tcp://katerose-fsn-cdr-dev.tailscale.svc.cluster.local:2375"
+  host = var.docker_host
 }
 
 provider "coder" {}
